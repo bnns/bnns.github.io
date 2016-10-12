@@ -67,13 +67,31 @@ let's see how far we can get within a single one. We can start by specifying
 the initial state of every game. Part of that is allowing the player to choose
 **x**'s or **o**'s. Here is some sample code:
 
-~~~elixir defmodule TicTacToe do @players [:x, :o]
+~~~elixir 
+defmodule TicTacToe do 
 
-    def start_game do user = "Do you want to play x or o? " |> IO.gets |>
-    String.first |> String.to_atom game_state = [ ["1", "2", "3"], ["4", "5",
-    "6"], ["7", "8", "9"] ] move_history = %{:x => [], :o => [], :moves =>
-    Enum.into(1..9, [])} # new_turn user, game_state, move_history end end ~~~
-    This code does the following:
+  @players [:x, :o]
+
+  def start_game do
+    user = "Do you want to play x or o? "
+    |> IO.gets
+    |> String.first
+    |> String.to_atom
+
+    game_state = [
+      ["1", "2", "3"],
+      ["4", "5", "6"],
+      ["7", "8", "9"]
+    ]
+
+    move_history = 
+      %{:x => [], :o => [], :moves => Enum.into(1..9, [])}
+    new_turn user, game_state, move_history
+  end
+
+end
+~~~
+This code does the following:
 
 1. It establishes that there are only two kinds of players (x and o)
 2. It starts a game by asking which side the user would like to play
@@ -98,27 +116,49 @@ in OO it is optional to pass the game state and move history since they would
 generally be mutable entities. Given our statelessness, however, the natural
 way to construct our function is via recursion. Here it is:
 
-~~~elixir def new_turn(user, game_state, move_history) do
-print_board(game_state) user_input = IO.gets("What is your move? ") |>
-String.first |> String.to_integer valid_moves = move_history[:moves] opponent
-= List.first(@players -- [user])
+~~~elixir 
+def new_turn(user, game_state, move_history) do
+  print_board game_state
 
-  if Enum.member?(valid_moves, user_input) do IO.puts "You selected " <>
-  to_string(user_input)
+  user_input = IO.gets("What is your move? ")
+  |> String.first
+  |> String.to_integer
 
-    new_state = update_state( game_state, user, user_input)
+  valid_moves = move_history[:moves]
+  opponent = List.first(@players -- [user])
 
-    case not_over?(move_history, user, user_input) do {:tie, new_history} ->
-    new_turn(:tie, new_state, new_history) {:over, new_history} ->
-    new_turn(user, new_state, new_history) {:not_over, new_history} ->
-    opponent_move = evaluate_next( game_state, valid_moves -- [user_input])
-    IO.puts "Opponent selects " <> to_string(opponent_move) newer_state
-    = update_state( new_state, opponent, opponent_move) 
+  if Enum.member? valid_moves, user_input do
+    IO.puts "You selected " <> to_string user_input
+    new_state = update_state game_state, user, user_input
 
-        case not_over?(new_history, opponent, opponent_move) do {_,
-        new_history} -> new_turn(user, newer_state, new_history) end end else
-        IO.puts "Invalid move" new_turn(user, game_state, move_history) end end
-        ~~~
+    case not_over? move_history, user, user_input do
+      {:tie, new_history} ->
+        new_turn :tie, new_state, new_history
+
+      {:over, new_history} ->
+        new_turn user, new_state, new_history
+
+      {:not_over, new_history} ->
+        opponent_move = evaluate_next(
+          game_state, 
+          valid_moves -- [user_input]
+        )
+        IO.puts "Opponent selects " <> to_string opponent_move
+        newer_state = update_state new_state,
+          opponent,
+          opponent_move
+
+        case not_over? new_history, opponent, opponent_move do
+          {_, new_history} ->
+            new_turn user, newer_state, new_history
+        end
+    end
+  else
+    IO.puts "Invalid move"
+    new_turn user, game_state, move_history
+  end
+end
+~~~
 
 This code does the following:
 
@@ -129,12 +169,18 @@ This code does the following:
 
 If the game ends we give the following feedback:
 
-~~~elixir def new_turn(user, game_state, %{:moves => []}) do IO.write """
+~~~elixir 
+  def new_turn(user, game_state, %{:moves => []}) do
+    IO.write """
 
-  Game over!
+    Game over!
 
-  """ IO.puts "The winner is " <> to_string user IO.puts "The final board is"
-  print_board game_state end ~~~
+    """
+    IO.puts "The winner is " <> to_string user
+    IO.puts "The final board is"
+    print_board game_state
+  end
+~~~
 
 Notice that we can use the same function names but with different signatures.
 This is elixir's pattern matching at work, which for functions enables
