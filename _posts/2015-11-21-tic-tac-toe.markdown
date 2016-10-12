@@ -1,5 +1,9 @@
---- layout: post title:  "Tic Tac Toe in Elixir" date:   2015-11-21 20:55:37
--0600 categories: elixir ---
+--- 
+layout: post 
+title: Tic Tac Toe in Elixir
+date: 2015-11-21 20:55:37
+categories: elixir 
+---
 
 The following is a tutorial on creating a tic-tac-toe game in
 [Elixir](http://wwww.elixir-lang.org), a functional language widely regarded as
